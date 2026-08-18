@@ -8,7 +8,43 @@
   <body>
     <p>Opening PIXEL RUN...</p>
     <script>
-      window.location.replace('https://jimm144.github.io/pixel-run/index.html');
+      const target = 'https://jimm144.github.io/pixel-run/index.html';
+      const marker = 'pixeldash.redirect_migration_v2';
+      const meaningfulKeys = [
+        'pixeldash.best.v2',
+        'pixeldash.scores.v1',
+        'pixeldash.lifetime_stats',
+        'pixeldash.quests.v2',
+        'pixeldash.equipped_skin',
+        'pixeldash.total_runs.v1',
+      ];
+
+      function encodeStorage(storage) {
+        const bytes = new TextEncoder().encode(JSON.stringify(storage));
+        let binary = '';
+        for (const byte of bytes) binary += String.fromCharCode(byte);
+        return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+      }
+
+      try {
+        const shouldMigrate = localStorage.getItem(marker) !== '1'
+          && meaningfulKeys.some((key) => localStorage.getItem(key) !== null);
+        if (shouldMigrate) {
+          const storage = {};
+          for (let i = 0; i < localStorage.length; i += 1) {
+            const key = localStorage.key(i);
+            if (!key || !key.startsWith('pixeldash.') || key === marker) continue;
+            const value = localStorage.getItem(key);
+            if (value !== null) storage[key] = value;
+          }
+          localStorage.setItem(marker, '1');
+          window.location.replace(`${target}#pixelrun-migrate=${encodeStorage(storage)}`);
+        } else {
+          window.location.replace(target);
+        }
+      } catch {
+        window.location.replace(target);
+      }
     </script>
   </body>
 </html>
